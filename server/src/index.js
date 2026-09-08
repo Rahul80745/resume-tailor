@@ -232,7 +232,8 @@ function hydrate(row) {
 /* ------------------------------------------------------------------ */
 /* static client (after `npm run build` in /client)                    */
 /* ------------------------------------------------------------------ */
-const dist = resolve(process.cwd(), '../client/dist');
+const thisDir = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
+const dist = resolve(thisDir, '../../client/dist');
 if (existsSync(dist)) {
   app.use(express.static(dist));
   app.get(/^(?!\/api).*/, (req, res) => res.sendFile(resolve(dist, 'index.html')));
