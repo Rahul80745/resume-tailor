@@ -6,6 +6,7 @@ WORKDIR /app
 # Install server deps
 COPY server/package.json server/package-lock.json* server/
 RUN cd server && npm install --omit=dev
+COPY server/ server/
 
 # Install client deps and build
 COPY client/package.json client/package-lock.json* client/
