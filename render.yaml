@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: resume-tailor
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_PATH
+        value: /data/app.db
+    disk:
+      name: resume-data
+      mountPath: /data
+      sizeGB: 1

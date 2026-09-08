@@ -1,0 +1,16 @@
+{
+  "name": "resume-tailor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "start": "cd server && node src/index.js",
+    "start:node22": "cd server && node --experimental-sqlite src/index.js",
+    "dev": "echo 'Run server and client in separate terminals — see README.md'"
+  }
+}
