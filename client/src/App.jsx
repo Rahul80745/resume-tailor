@@ -134,7 +134,7 @@ export default function App() {
         resume: shownRef.current.resume,
         cover_letter: shownRef.current.letter,
         template: settings.template,
-        filename: kind === 'cover_letter' ? `${fileBaseRef.current}-Cover-Letter` : `${fileBaseRef.current}-Resume`,
+        filename: kind === 'cover_letter' ? `${fileBaseRef.current}_Cover_Letter` : fileBaseRef.current,
       });
     } catch (e) { setError(e.message); }
     finally { setBusy(''); }
@@ -142,7 +142,7 @@ export default function App() {
 
   const shown = draft || result?.resume;
   const shownLetter = letterDraft || result?.cover_letter;
-  const fileBase = (shown?.name || 'Resume').replace(/\s+/g, '-');
+  const fileBase = buildFileBase(shown, result);
   shownRef.current = { resume: shown, letter: shownLetter };
   fileBaseRef.current = fileBase;
 
@@ -302,7 +302,7 @@ export default function App() {
                 onSave={saveEdits}
                 onCopy={() => { navigator.clipboard.writeText(resumeToText(shown)); say('Plain text copied.'); }}
                 onPdf={() => savePdf('resume')}
-                onWord={() => downloadWord(resumeToHtml(shown), template.css, `${fileBase}-Resume`)}
+                onWord={() => downloadWord(resumeToHtml(shown), template.css, fileBase)}
                 extra={
                   <select className="input inline" value={settings.template}
                     onChange={async (e) => setSettings(await api.saveSettings({ template: e.target.value }))}>
@@ -327,14 +327,21 @@ export default function App() {
                     navigator.clipboard.writeText(t); say('Cover letter copied.');
                   }}
                   onPdf={() => savePdf('cover_letter')}
-                  onWord={() => downloadWord(coverLetterToHtml(shownLetter, shown), template.css, `${fileBase}-Cover-Letter`)}
+                  onWord={() => downloadWord(coverLetterToHtml(shownLetter, shown), template.css, `${fileBase}_Cover_Letter`)}
                 >
                   <CoverLetterEditor letter={letterDraft || {}} onChange={setLetterDraft} />
                 </DocCard>
               ) : (
-                <div className="card">
-                  <p>No cover letter yet.</p>
-                  <button className="btn" onClick={makeLetter} disabled={!!busy}>Write the cover letter</button>
+                <div className="card cover-prompt">
+                  <div>
+                    <strong>Cover letter</strong>
+                    <p className="muted small">
+                      Not written yet. It takes one more model call, so it only runs when you ask for it.
+                    </p>
+                  </div>
+                  <button className="btn primary" onClick={makeLetter} disabled={!!busy}>
+                    {busy === 'Writing cover letter' ? 'Writing…' : 'Generate cover letter'}
+                  </button>
                 </div>
               )}
             </>
@@ -380,6 +387,24 @@ export default function App() {
       )}
     </div>
   );
+}
+
+
+/* Downloads are named firstname_lastname_company, falling back to the role
+   title when the job description never names the employer. */
+function buildFileBase(resume, result) {
+  const clean = (v) =>
+    (v || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')  // strip accents: María -> Maria
+      .replace(/[^\w\s-]/g, ' ')        // drop punctuation, keep letters/digits
+      .trim()
+      .replace(/\s+/g, '_');
+
+  const person = clean(resume?.name) || 'Resume';
+  const target = clean(result?.company) || clean(result?.title) || clean(resume?.headline);
+
+  return target ? `${person}_${target}` : person;
 }
 
 /* ------------------------------------------------------------------ */

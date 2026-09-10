@@ -131,18 +131,9 @@ app.post('/api/tailor', wrap(async (req, res) => {
     return res.status(502).json({ error: 'The model returned an unexpected shape. Try again.' });
   }
 
-  let cover = null;
-  try {
-    const letter = await chatJSON({
-      ...cfg,
-      prompt: buildCoverLetterPrompt({ resume: parsed.resume, jd, instructions, mode, directives: settings.prompt_cover }),
-      temperature: 0.6,
-      maxTokens: 1500,
-    });
-    cover = letter.parsed;
-  } catch {
-    cover = null; // the resume still ships; the UI offers a retry
-  }
+  /* The cover letter is deliberately NOT generated here. It costs a second
+     model call that most runs do not need, so the UI offers a button and
+     POST /api/tailorings/:id/cover-letter produces it on demand. */
 
   const saved = insertTailoring({
     title: parsed.job_title || null,
@@ -155,7 +146,7 @@ app.post('/api/tailor', wrap(async (req, res) => {
     ats_score: Number.isFinite(parsed.ats_score) ? Math.round(parsed.ats_score) : null,
     analysis: JSON.stringify(parsed.analysis || {}),
     resume_json: JSON.stringify(parsed.resume),
-    cover_letter: cover ? JSON.stringify(cover) : null,
+    cover_letter: null,
   });
 
   res.json(hydrate(saved));
